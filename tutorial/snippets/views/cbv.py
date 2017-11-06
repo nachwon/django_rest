@@ -4,6 +4,7 @@ from rest_framework import status, generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from snippets.permissions import IsOwnerOrReadOnly
 from ..models import Snippet
 from ..serializers import SnippetSerializer, UserSerializer
 
@@ -35,7 +36,7 @@ class SnippetList(APIView):
 
 
 class SnippetDetail(APIView):
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly,)
 
     def get_object(self, pk):
         try:
@@ -55,6 +56,11 @@ class SnippetDetail(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk, format=None):
+        snippet = self.get_object(pk)
+        snippet.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class UserList(generics.ListAPIView):
